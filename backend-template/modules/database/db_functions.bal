@@ -15,48 +15,47 @@
 // under the License.
 import ballerina/sql;
 
-# Fetch sample collections.
+# fetch employee info from an email.
 #
-# + name - Name to filter
-# + 'limit - Limit of the response
-# + offset - Offset of the number of sample collection to retrieve
-# + return - List of sample collections|Error
-public isolated function fetchSampleCollections(string? name, int? 'limit, int? offset) returns SampleCollection[]|error {
-    stream<SampleCollection, error?> resultStream = databaseClient->
-            query(getSampleCollectionsQuery(name, 'limit, offset));
+# + email - parameter description
+# + return - return value description
+public isolated function fetchEmployeeInfo(string email) returns EmployeeInfo|error? {
+    EmployeeInfo|sql:Error result = databaseClient->queryRow(getEmployeeInfo(email));
 
-    SampleCollection[] sampleCollections = [];
-    check from SampleCollection sampleCollection in resultStream
-        do {
-            sampleCollections.push(sampleCollection);
+    if result is EmployeeInfo {
+        EmployeeInfo employee = {
+            id: result.id,
+            lastName: result.lastName,
+            firstName: result.firstName,
+            workLocation: result.workLocation,
+            epf: result.epf,
+            employeeLocation: result.employeeLocation,
+            wso2Email: result.wso2Email,
+            workPhoneNumber: result.workPhoneNumber,
+            startDate: result.startDate,
+            jobRole: result.jobRole,
+            managerEmail: result.managerEmail,
+            reportToEmail: result.reportToEmail,
+            additionalManagerEmail: result.additionalManagerEmail,
+            additionalReportToEmail: result.additionalReportToEmail,
+            employeeStatus: result.employeeStatus,
+            lengthOfService: result.lengthOfService,
+            relocationStatus: result.relocationStatus,
+            employeeThumbnail: result.employeeThumbnail,
+            subordinateCount: result.subordinateCount,
+            timestamp: result.timestamp,
+            probationEndDate: result.probationEndDate,
+            agreementEndDate: result.agreementEndDate,
+            employmentType: result.employmentType,
+            company: result.company,
+            office: result.office,
+            businessUnit: result.businessUnit,
+            team: result.team,
+            subTeam: result.subTeam,
+            unit: result.unit
         };
-
-    return sampleCollections;
-}
-
-# Fetch specific sample collection.
-#
-# + id - Identification of the sample collection
-# + return - Sample collections|Error, if so
-public isolated function fetchSampleCollection(int id) returns SampleCollection|error? {
-    SampleCollection|sql:Error sampleCollection = databaseClient->queryRow(getSampleCollectionQuery(id));
-
-    if sampleCollection is sql:Error && sampleCollection is sql:NoRowsError {
-        return;
-    }
-    return sampleCollection;
-}
-
-# Insert sample collection.
-#
-# + sampleCollection - Sample collection payload
-# + createdBy - Person who created the sample collection
-# + return - Id of the sample collection|Error
-public isolated function addSampleCollection(AddSampleCollection sampleCollection, string createdBy) returns int|error {
-    sql:ExecutionResult|error executionResults = databaseClient->execute(addSampleCollectionQuery(sampleCollection, createdBy));
-    if executionResults is error {
-        return executionResults;
+        return employee;
     }
 
-    return <int>executionResults.lastInsertId;
+    return result;
 }
