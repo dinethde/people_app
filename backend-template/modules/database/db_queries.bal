@@ -24,7 +24,7 @@ isolated function getEmployeeInfo(string email) returns sql:ParameterizedQuery {
         e.id                                         AS id,
         e.last_name                                  AS lastName,
         e.first_name                                 AS firstName,
-        e.title                                      AS title,
+        e.work_location                                      AS workLocation,
         e.epf                                        AS epf,
         e.employee_location                          AS employeeLocation,
         e.wso2_email                                 AS wso2Email,
