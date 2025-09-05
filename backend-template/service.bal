@@ -13,9 +13,9 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import sample_app.authorization;
-import sample_app.database;
-import sample_app.entity;
+import people_app.authorization;
+import people_app.database;
+import people_app.entity;
 
 import ballerina/cache;
 import ballerina/http;
@@ -29,9 +29,11 @@ final cache:Cache cache = new ({
     cleanupInterval: 900.0
 });
 
+final cache:Cache employeeInfoCache = new (capacity = 100, evictionFactor = 0.2);
+
 @display {
-    label: "Sample Application",
-    id: "domain/sample-application"
+    label: "People Application",
+    id: "domain/people-application"
 }
 
 service class ErrorInterceptor {
@@ -59,7 +61,7 @@ service http:InterceptableService / on new http:Listener(9090) {
     #
     # + return - authorization:JwtInterceptor, ErrorInterceptor
     public function createInterceptors() returns http:Interceptor[] =>
-        [new authorization:JwtInterceptor(), new ErrorInterceptor()];
+        [new ErrorInterceptor()];
 
     # Fetch samples AppConfig.
     #
@@ -121,123 +123,54 @@ service http:InterceptableService / on new http:Listener(9090) {
         return userInfoResponse;
     }
 
-    # Fetch all samples from the database.
+    # Fetch user information of the logged in users.
     #
-    # + name - Name to filter
-    # + 'limit - Limit of the data
-    # + offset - Offset of the data
-    # + return - All samples|Error
-    isolated resource function get collections(http:RequestContext ctx, string? name, int? 'limit, int? offset)
-        returns SampleCollection|http:Forbidden|http:BadRequest|http:InternalServerError {
+    # + email - user's wso2 email
+    # + return - Employeeinfo object|Error
+    resource function get employee\-info/[string email]() returns EmployeeInfo|http:InternalServerError|http:Forbidden|http:BadRequest|http:NotFound {
 
-        // "requestedBy" is the email of the user access this resource.
-        // interceptor set this value after validating the jwt.
-        authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
-        if userInfo is error {
+        if !email.matches(WSO2_EMAIL) {
             return <http:BadRequest>{
                 body: {
-                    message: "User information header not found!"
+                    message: string `Input email is not a valid WSO2 email address: ${email}`
                 }
             };
         }
 
-        // [Start] Custom Resource level authorization.
-        if !authorization:checkPermissions([authorization:authorizedRoles.employeeRole],
-                userInfo.groups) {
+        EmployeeInfo|error cacheResult;
+        EmployeeInfo|error? employeeInfo;
+        if employeeInfoCache.hasKey(email) {
+            cacheResult = employeeInfoCache.get(email).ensureType();
 
-            return <http:Forbidden>{
-                body: {
-                    message: "Insufficient privileges!"
-                }
-            };
+            if cacheResult is error {
+                log:printError("Cache result error : ", cacheResult);
+            }
+
+            if cacheResult is EmployeeInfo {
+                employeeInfo = employeeInfoCache.put(email, cacheResult);
+            }
         }
-        // [End] Custom Resource level authorization.
 
-        database:SampleCollection[]|error collections = database:fetchSampleCollections(name, 'limit, offset);
-        if collections is error {
-            string customError = string `Error occurred while retrieving the sample collections!`;
-            log:printError(customError, collections);
+        employeeInfo = database:fetchEmployeeInfo(email);
+
+        if employeeInfo is error {
+            log:printError("Error", employeeInfo);
             return <http:InternalServerError>{
                 body: {
-                    message: customError
+                    message: "Internal Server Error"
                 }
             };
         }
 
-        return {
-            count: collections.length(),
-            collections: collections
-        };
-    }
-
-    # Insert collections.
-    #
-    # + collection - New collection
-    # + return - Created|Forbidden|BadRequest|Error
-    resource function post collections(http:RequestContext ctx, database:AddSampleCollection collection)
-        returns http:Created|http:Forbidden|http:BadRequest|http:InternalServerError {
-
-        // "requestedBy" is the email of the user access this resource.
-        // interceptor set this value after validating the jwt.
-        authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
-        if userInfo is error {
-            return <http:BadRequest>{
+        if employeeInfo is () {
+            return <http:NotFound>{
                 body: {
-                    message: "User information header not found!"
+                    message: "User Not Found"
                 }
             };
         }
 
-        // [Start] Custom Resource level authorization.
-        if !authorization:checkPermissions([authorization:authorizedRoles.headPeopleOperationsRole],
-                userInfo.groups) {
+        return employeeInfo;
 
-            return <http:Forbidden>{
-                body: {
-                    message: "Insufficient privileges!"
-                }
-            };
-        }
-        // [End] Custom Resource level authorization.
-
-        // Insert collection.
-        int|error collectionId = database:addSampleCollection(collection, userInfo.email);
-        if collectionId is error {
-            string customError = string `Error occurred while adding sample collection!`;
-            log:printError(customError, collectionId);
-            return <http:InternalServerError>{
-                body: {
-                    message: customError
-                }
-            };
-        }
-
-        database:SampleCollection|error? addedSampleCollection = database:fetchSampleCollection(collectionId);
-
-        // Handle : database read error.
-        if addedSampleCollection is error {
-            string customError = string `Error occurred while retrieving the added sample collection!`;
-            log:printError(customError, addedSampleCollection);
-            return <http:InternalServerError>{
-                body: {
-                    message: customError
-                }
-            };
-        }
-
-        // Handle : no record error.
-        if addedSampleCollection is null {
-            string customError = string `Added sample collection is no longer available to access!`;
-            log:printError(customError);
-            return <http:InternalServerError>{
-                body: {
-                    message: customError
-                }
-            };
-        }
-
-        return <http:Created>{
-            body: addedSampleCollection
-        };
     }
 }
