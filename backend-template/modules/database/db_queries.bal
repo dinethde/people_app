@@ -15,84 +15,51 @@
 // under the License.
 import ballerina/sql;
 
-# Build query to add a sample collection.
+# Build query to retrieve an employee.
 #
-# + sampleCollection - sample collection to be added
-# + createdBy - The user who is adding the sample collection
-# + return - sql:ParameterizedQuery - Insert query for the sample collection table
-isolated function addSampleCollectionQuery(AddSampleCollection sampleCollection, string createdBy)
-    returns sql:ParameterizedQuery =>
-`
-    INSERT INTO sample_collection
-    (
-        sample_collection_name,
-        sample_collection_created_by,
-        sample_collection_updated_by
-    )
-    VALUES
-    (
-        ${sampleCollection.name},
-        ${createdBy},
-        ${createdBy}
-    )
-`;
+# + email - Identification of the user
+# + return - sql:ParameterizedQuery - Select query for to retrieve an employee information
+isolated function getEmployeeInfo(string email) returns sql:ParameterizedQuery {
+    sql:ParameterizedQuery query = `SELECT
+        e.id                                         AS id,
+        e.last_name                                  AS lastName,
+        e.first_name                                 AS firstName,
+        e.title                                      AS title,
+        e.epf                                        AS epf,
+        e.employee_location                          AS employeeLocation,
+        e.wso2_email                                 AS wso2Email,
+        e.work_phone_number                          AS workPhoneNumber,
+        e.start_date                                 AS startDate,
+        e.job_role                                   AS jobRole,
+        e.manager_email                              AS managerEmail,
+        e.report_to_email                            AS reportToEmail,
+        e.additional_manager_email                   AS additionalManagerEmail,
+        e.additional_report_to_email                 AS additionalReportToEmail,
+        e.employee_status                            AS employeeStatus,
+        e.length_of_service                          AS lengthOfService,
+        e.relocation_status                          AS relocationStatus,
+        e.employee_thumbnail                         AS employeeThumbnail,
+        e.subordinate_count                          AS subordinateCount,
+        e._timestamp                                 AS timestamp,
+        e.probation_end_date                         AS probationEndDate,
+        e.agreement_end_date                         AS agreementEndDate,
+        et.name                                      AS employmentType,
+        c.name                                       AS company,
+        o.name                                       AS office,
+        bu.name                                      AS businessUnit,
+        t.name                                       AS team,
+        st.name                                      AS subTeam,
+        u.name                                       AS unit
+    FROM employee e
+    LEFT JOIN employment_type      et ON et.id  = e.employment_type_id
+    LEFT JOIN office               o  ON o.id   = e.office_id
+    LEFT JOIN company              c  ON c.id   = o.company_id
+    LEFT JOIN hris_business_unit   bu ON bu.id  = e.business_unit_id
+    LEFT JOIN hris_team            t  ON t.id   = e.team_id
+    LEFT JOIN hris_sub_team        st ON st.id  = e.sub_team_id
+    LEFT JOIN hris_unit            u  ON u.id   = e.unit_id
+    WHERE e.wso2_email = ${email}`;
 
-# Build query to retrieve sample collections.
-#
-# + name - Name to filter
-# + 'limit - Limit of the data
-# + offset - Offset of the query
-# + return - sql:ParameterizedQuery - Select query for the sample_collection table
-isolated function getSampleCollectionsQuery(string? name, int? 'limit, int? offset) returns sql:ParameterizedQuery {
-    sql:ParameterizedQuery mainQuery = `
-            SELECT
-                sample_collection_id AS 'id',
-                sample_collection_name AS 'name',
-                sample_collection_created_on AS 'createdOn',
-                sample_collection_created_by AS 'createdBy',
-                sample_collection_updated_on AS 'updatedOn',
-                sample_collection_updated_by AS 'updatedBy'
-            FROM
-                sample_schema.sample_collection
-    `;
-
-    // Setting the filters based on the sample collection object.
-    sql:ParameterizedQuery[] filters = [];
-
-    if name is string {
-        filters.push(sql:queryConcat(`sample_collection_name LIKE `, `${name}`));
-    }
-
-    mainQuery = buildSqlSelectQuery(mainQuery, filters);
-
-    // Setting the limit and offset.
-    if 'limit is int {
-        mainQuery = sql:queryConcat(mainQuery, ` LIMIT ${'limit}`);
-        if offset is int {
-            mainQuery = sql:queryConcat(mainQuery, ` OFFSET ${offset}`);
-        }
-    } else {
-        mainQuery = sql:queryConcat(mainQuery, ` LIMIT 1000`);
-    }
-
-    return mainQuery;
+    return query;
 }
 
-# Build query to retrieve sample collection.
-#
-# + id - Identification of the sample collection
-# + return - sql:ParameterizedQuery - Select query for the sample_collection table
-isolated function getSampleCollectionQuery(int id) returns sql:ParameterizedQuery =>
-`
-    SELECT
-        sample_collection_id AS 'id',
-        sample_collection_name AS 'name',
-        sample_collection_created_on AS 'createdOn',
-        sample_collection_created_by AS 'createdBy',
-        sample_collection_updated_on AS 'updatedOn',
-        sample_collection_updated_by AS 'updatedBy'
-    FROM
-        sample_schema.sample_collection
-    WHERE
-        sample_collection_id = ${id}
-`;
