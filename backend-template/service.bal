@@ -61,7 +61,7 @@ service http:InterceptableService / on new http:Listener(9090) {
     #
     # + return - authorization:JwtInterceptor, ErrorInterceptor
     public function createInterceptors() returns http:Interceptor[] =>
-        [new ErrorInterceptor()];
+        [new authorization:JwtInterceptor(), new ErrorInterceptor()];
 
     # Fetch samples AppConfig.
     #
