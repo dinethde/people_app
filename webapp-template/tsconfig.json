@@ -40,7 +40,7 @@
       "@slices/*": ["./src/slices/*"],
       "@view/*": ["./src/view/*"],
       "@utils/*": ["./src/utils/*"],
-      "@/types/*": ["./src/types/*"]
+      "@/types/*": ["./src/types/*"],
     }
   },
 
