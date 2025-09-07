@@ -1,8 +1,39 @@
+import TabsPage from "@root/src/layout/pages/TabsPage";
+import { Files, Landmark, PowerOffIcon, SquareUserRound, UserLock } from "lucide-react";
+
+import EmployeeInfo from "@view/profile/panel/EmployeeInfo";
+
 function Profile() {
   return (
-    <div>
-      <div></div>
-    </div>
+    <TabsPage
+      title="Profile"
+      tabsPage={[
+        {
+          tabTitle: "Employee Info",
+          tabPath: "employee-info",
+          icon: <SquareUserRound />,
+          page: <EmployeeInfo />,
+        },
+        {
+          tabTitle: "Personal Info",
+          tabPath: "personal-info",
+          icon: <UserLock />,
+          page: <EmployeeInfo />,
+        },
+        {
+          tabTitle: "Documents",
+          tabPath: "documents",
+          icon: <Files />,
+          page: <EmployeeInfo />,
+        },
+        {
+          tabTitle: "Bank Details",
+          tabPath: "bank-details",
+          icon: <Landmark />,
+          page: <EmployeeInfo />,
+        },
+      ]}
+    />
   );
 }
 
