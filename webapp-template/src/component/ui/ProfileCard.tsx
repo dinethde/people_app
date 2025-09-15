@@ -209,7 +209,7 @@ function ProfileCard(props: ProfileCardProps) {
                 {(field) => (
                   <PhoneField
                     name={field.name}
-                    label="Work Phone Number"
+                    label="Phone number"
                     value={field.state.value ?? ""}
                     onChange={field.handleChange}
                     onBlur={field.handleBlur}
@@ -220,7 +220,7 @@ function ProfileCard(props: ProfileCardProps) {
 
               <form.Field name="epf">
                 {(field) => (
-                  <PhoneField
+                  <DigitsField
                     name={field.name}
                     label="EPF"
                     value={field.state.value ?? ""}
