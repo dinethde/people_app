@@ -13,8 +13,6 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import { UpdateEmployeeInfo } from "../slices/employeeSlice/employee";
-import { Employee } from "./types";
 
 export const isIncludedRole = (a: string[], b: string[]): boolean => {
   return [...getCrossItems(a, b), ...getCrossItems(b, a)].length > 0;
@@ -40,7 +38,7 @@ export function hexToRgba(hex: string, alpha: number) {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  return `rgba(${r},${g},${b},${alpha})`;
 }
 interface Date {
   year: number;
@@ -56,7 +54,7 @@ export function toYmdString(d: DateParts | null): string {
   const y = String(d.year).padStart(4, "0");
   const m = String(d.month).padStart(2, "0");
   const day = String(d.day).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  return `${y} ${m} ${day}`;
 }
 
 export function fromYmdString(s: string): Date {
@@ -67,4 +65,17 @@ export function fromYmdString(s: string): Date {
 export const fromYmd = (s: string): NullableDate => {
   const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   return m ? { year: +m[1], month: +m[2], day: +m[3] } : null;
+};
+
+type Start = { year: number; month: number; day: number } | Date | undefined;
+
+export const yearsOfService = (start: Start, now = new Date()) => {
+  if (!start) return 0;
+  const y = start instanceof Date ? start.getFullYear() : start.year;
+  const m = start instanceof Date ? start.getMonth() + 1 : start.month;
+  const d = start instanceof Date ? start.getDate() : start.day;
+
+  let yrs = now.getFullYear() - y;
+  if (now.getMonth() + 1 < m || (now.getMonth() + 1 === m && now.getDate() < d)) yrs--;
+  return Math.max(0, yrs);
 };
