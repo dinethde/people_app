@@ -32,10 +32,6 @@ function ProfileCard(props: ProfileCardProps) {
   const [editing, setEditing] = useState(false);
   const employee = useAppSelector((State: RootState) => State.employee.employee);
 
-  if (!employee) {
-    return null;
-  }
-
   const getChangedFields = (
     prev: EmployeeInfo,
     cur: UpdateEmployeeInfoPayload,
@@ -60,12 +56,15 @@ function ProfileCard(props: ProfileCardProps) {
     return changes;
   };
 
+  const defaultValues = employee ?? ({} as EmployeeInfo);
+
   const form = useForm({
-    defaultValues: employee,
+    defaultValues,
     validators: {
       onChange: EmployeeInfoSchema,
     },
     onSubmit: async ({ value }) => {
+      if (!employee) return;
       console.log("Form submitting : ", value);
 
       const changes = getChangedFields(employee, value);
@@ -74,6 +73,16 @@ function ProfileCard(props: ProfileCardProps) {
       dispatch(updateEmployeeInfo(changes));
     },
   });
+
+  // Now it's safe to conditionally render UI (not hooks)
+  if (!employee) {
+    return (
+      <div className="w-full rounded-2xl border p-4">
+        {/* show skeleton/placeholder here */}
+        Loading…
+      </div>
+    );
+  }
 
   const { Icon, heading, ActionIcon, IconColor } = props;
 
