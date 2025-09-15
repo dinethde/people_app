@@ -1,58 +1,61 @@
-//
-import { Input } from "@root/components/ui/input";
 import { Label } from "@root/components/ui/label";
 
-interface PhoneFieldProps {
+import * as React from "react";
+
+import { PhoneInput } from "@component/ui/PhoneInput";
+
+// your wrapper shown earlier
+
+type PhoneFieldProps = {
   name: string;
-  label: string;
+  /** Anything you want to show above the field: text, <label>, a custom header, etc. */
+  label?: React.ReactNode;
+  /** E.164 value (e.g. "+94712345678") or "" */
   value: string;
   onChange: (v: string) => void;
   onBlur: () => void;
   error?: string;
   disabled?: boolean;
-  type?: string;
-  required?: string;
+  /** Placeholder for the input */
   placeHolder?: string;
-}
+  /** If you don’t pass a semantic <label>, set this for accessibility */
+  ariaLabel?: string;
+  /** Optional default country for the picker (e.g., "LK") */
+  defaultCountry?: import("react-phone-number-input").Country;
+};
 
-export function PhoneField(props: PhoneFieldProps) {
-  const {
-    name,
-    label,
-    value,
-    onChange,
-    onBlur,
-    error,
-    disabled,
-    placeHolder = "+94 89 432 2345",
-  } = props;
-
+export function PhoneField({
+  name,
+  label,
+  value,
+  onChange,
+  onBlur,
+  error,
+  disabled,
+  placeHolder = "Enter phone number",
+  ariaLabel,
+  defaultCountry = "LK",
+}: PhoneFieldProps) {
   return (
-    <div>
+    <div className="space-y-1">
+      {/* Render whatever the caller sends, no wrapper */}
       <Label htmlFor={name}>{label}</Label>
-      <Input
+
+      <PhoneInput
         id={name}
-        type="tel"
-        inputMode="tel"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onBlur={onBlur}
+        name={name}
         placeholder={placeHolder}
-        required
+        defaultCountry={defaultCountry}
+        international
+        value={value || undefined} // undefined while typing is OK
+        onChange={(v) => onChange((v ?? "") as string)}
+        onBlur={onBlur}
         disabled={disabled}
-        className={
-          disabled
-            ? [
-                "text-st-200",
-                "disabled:opacity-100", // cancel dimming
-                "disabled:border-0 disabled:shadow-none disabled:bg-transparent",
-                "focus-visible:ring-0 focus-visible:border-transparent",
-                "disabled:px-0 disabled:py-0 ",
-              ].join(" ")
-            : "text-st-300 p-m px-3 py-1"
-        }
+        autoComplete="tel"
+        aria-label={ariaLabel} // keeps it accessible when no <label htmlFor=...> is provided
       />
-      {error && <p className="text-red-600">{error}</p>}
+
+      {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
   );
 }
